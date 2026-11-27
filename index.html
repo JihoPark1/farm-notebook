@@ -1,0 +1,687 @@
+<!doctype html><html lang="ko"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>우리 농장 소 장부</title><style>
+*{box-sizing:border-box}body{margin:0;background:#f0f5ef;color:#182e25;font:1.1rem/1.55 system-ui,sans-serif}main,header>div{max-width:880px;margin:auto;padding:24px}header{background:#173d2e;color:white}header strong{font-size:1.25rem}h1{font-size:clamp(2rem,6vw,3rem);letter-spacing:-.045em;margin:.25em 0}h2,h3,p{margin:.35em 0 .65em}section,details{background:white;border:1px solid #d3dfd6;border-radius:18px;padding:clamp(16px,4vw,30px);margin:0 0 18px}label,summary{display:block;font-weight:750;margin:12px 0 6px}summary{cursor:pointer;margin:0}input,textarea,select,button{font:inherit;border:1px solid #899d90;border-radius:10px;padding:12px;min-height:52px}input,textarea,select{width:100%;background:#fcfefc;color:inherit}button{background:#176044;color:white;font-weight:750;cursor:pointer}button.alt{background:white;color:#174631}button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible,summary:focus-visible{outline:3px solid #195eb4;outline-offset:3px}.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}.grid,.rank{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.rank article{border-radius:14px;padding:16px;overflow-wrap:anywhere}.first{background:#dbf2e2;color:#11492d}.second{background:#dfedff;color:#113b75}.third{background:#fff0bd;color:#5b4100}.rank strong{display:block;font-size:1.55rem}.help{color:#415a4b;font-size:1rem}.issue{padding:12px;background:#f8ede7;border-radius:10px;margin:10px 0;overflow-wrap:anywhere}a{color:#175741}[hidden]{display:none!important}@media(max-width:610px){.grid,.rank{grid-template-columns:1fr}.actions button{flex:1}}
+.table-wrap{overflow:auto;margin:1rem 0}table{border-collapse:collapse;width:100%;font-size:1rem}caption{text-align:left;font-weight:750;margin-bottom:.65rem}td,th{border-bottom:1px solid #dae4dc;padding:.65rem;text-align:left;white-space:nowrap}th{background:#edf4ef}.verdict{display:inline-block;font-weight:750;border-radius:6px;padding:.15rem .5rem}.blocked{background:#fbdede;color:#8b2323}.photo img{max-width:min(100%,470px);max-height:550px;object-fit:contain;display:block;margin:12px 0}.photo pre{white-space:pre-wrap;overflow-wrap:anywhere}.photo button{margin:6px 8px 6px 0}body{font-size:1.25rem;background:#eff4ef}
+header>div,main{max-width:1000px}
+header>div{padding-block:22px}
+header strong{font-size:1.2rem}
+h1{font-size:clamp(2.1rem,6vw,3.15rem)}
+h2{font-size:clamp(1.65rem,4vw,2.15rem)}
+h2,h3{line-height:1.25}
+.help{font-size:1.08rem;color:#354d3f}
+button,input,select{min-height:58px}
+button{padding-inline:18px}
+summary{min-height:48px;align-content:center}
+.today-panel{border:2px solid #2b6247}
+#today-label{font-size:1.2rem;color:#254e39;font-weight:750}
+#today-cows>article>strong,#schedule>article>strong{font-size:1.42rem}
+#today-cows .rank{margin-block:14px}
+#today-cows>article button{margin-top:12px}
+#family{background:#e3ece4}
+#family>details,#family>section{margin-top:16px}
+#inventory-count{overflow-wrap:anywhere}
+.table-wrap:focus-visible{outline:3px solid #195eb4}
+@media(max-width:610px){main,header>div{padding:14px}.rank article{padding:13px}button{min-height:58px}.actions{gap:12px}}
+.today-cow>summary{font-size:1.42rem}.today-cow td,.today-cow th{padding:.55rem .45rem}.today-cow table{font-size:1.06rem}</style><header><div><h1>우리 농장 소 장부</h1></div></header><main>
+<section class="today-panel"><h2>오늘 수정할 소</h2><p id="today-label" class="help"></p><div id="today-cows" aria-live="polite"></div></section>
+
+
+<section id="result" hidden aria-live="polite"><h2 id="result-title">추천 결과</h2><p id="summary" class="help"></p><div id="rank" class="rank"></div><p class="help">판정 기준은 양호 3.125% 미만, 주의 3.125% 이상 6.25% 미만, 불가 6.25% 이상입니다.</p><div id="issues"></div><div class="table-wrap" tabindex="0" aria-label="정액 비교표"><table id="comparison"><caption>정액별 교배 결과</caption><thead><tr><th scope="col">정액번호</th><th scope="col">판정</th><th scope="col">추천 순위</th><th scope="col">근교계수</th><th scope="col">예상 근내지방도</th><th scope="col">예상 도체중</th><th scope="col">예상 등심단면적</th><th scope="col">예상 등지방 두께</th></tr></thead><tbody id="comparison-body"></tbody></table></div><div id="cow-dates"></div><div id="history"></div></section>
+<details id="family"><summary>가족용 관리 · 백업</summary><section><h2>사진으로 소 등록</h2><label for="photo-input">앨범에서 사진 고르기</label><input id="photo-input" type="file" accept="image/*" multiple><p id="photo-status" role="status"></p><div id="photo-numbers"></div><form id="photo-batch-form" hidden><label for="photo-batch">등록할 암소 번호</label><textarea id="photo-batch" rows="5" aria-describedby="photo-batch-help"></textarea><p id="photo-batch-help" class="help">목록을 원본과 한 번 확인한 뒤 한꺼번에 저장하세요.</p><div class="actions"><button>목록 확인하고 저장</button></div><p id="photo-batch-status" role="status"></p></form><form id="photo-cow-form"><label for="photo-cow">사진 속 소 번호 (12자리)</label><input id="photo-cow" inputmode="numeric" placeholder="사진에서 읽은 번호를 확인해 주세요" required><div class="actions"><button>소 저장하고 정액번호 넣기</button></div><p id="photo-cow-status" role="status"></p></form></section><section><h2>다음 수정 일정</h2><label for="status-filter">수정 여부</label><select id="status-filter"><option value="all">전체</option><option value="done">완료</option><option value="retry">재수정</option><option value="planned">수정 예정</option></select><label for="schedule-filter">일정 보기</label><select id="schedule-filter"><option value="7">오늘부터 7일 이내</option><option value="all">전체 암소</option><option value="30">오늘부터 30일 이내</option><option value="overdue">예정일 지남</option><option value="unset">일정 미등록</option></select><label for="herd-search">소 번호로 찾기</label><input id="herd-search" inputmode="numeric" placeholder="4자리 또는 12자리"><p id="herd-count" class="help"></p><div id="schedule" aria-live="polite"></div></section><section id="matching"><h2>정액번호 넣기</h2><p id="selected-cow" role="status"></p><form id="search"><div class="grid"><div><label for="cow">소 번호</label><input id="cow" inputmode="numeric" placeholder="4자리 또는 12자리" required></div></div><label for="semen">지금 있는 정액번호</label><input id="semen" placeholder="예: KPN101, KPN102, KPN103" required><p class="help">여러 번호는 쉼표나 띄어쓰기로 구분하세요.</p><div class="actions"><button type="submit">날짜와 정액 확인</button><button type="button" class="alt" id="demo">예시 보기</button></div></form></section><section><h2>정액번호 등록</h2><p id="inventory-count" class="help"></p><form id="inventory-form"><label for="inventory">지금 있는 정액번호</label><input id="inventory" placeholder="예시 1687, 1624, 1736"><div class="actions"><button>정액번호 저장</button></div><p id="inventory-status" role="status"></p></form></section><details><summary>암소 등록 · 수정 예정일 변경</summary><form id="herd-form"><div class="grid"><div><label for="herd-cow">개체번호 (12자리)</label><input id="herd-cow" name="cow" required inputmode="numeric"></div><div><label for="herd-short">단축번호 (선택)</label><input id="herd-short" name="short" inputmode="numeric" pattern="[0-9]{4}"></div><div><label for="herd-date">1차 수정 예정일</label><input id="herd-date" name="date" type="date"></div><div><label for="herd-state">수정 여부</label><select id="herd-state" name="state"><option value="planned">수정 예정</option><option value="done">완료</option><option value="retry">재수정</option></select></div><div><label for="herd-attempt">다음 수정 차수</label><select id="herd-attempt" name="attempt"><option value="2">2차 재수정</option><option value="3">3차 재수정</option></select></div></div><div class="actions"><button>암소 저장</button></div><p id="herd-status" role="status"></p></form></details><details><summary>재수정 날짜 자동 계산 설정</summary><form id="retry-form"><div class="grid"><div><label for="retry-second">1차에서 2차까지 며칠</label><input id="retry-second" type="number" min="1" max="365" required></div><div><label for="retry-third">2차에서 3차까지 며칠</label><input id="retry-third" type="number" min="1" max="365" required></div></div><p class="help">농장에서 사용하는 간격을 한 번 저장하면, 1차 예정일로 2차와 3차 날짜가 계산됩니다.</p><div class="actions"><button>재수정 간격 저장</button></div><p id="retry-status" role="status"></p></form></details><details><summary>공책 날짜의 연도 바꾸기</summary><form id="year-form"><label for="notebook-year">공책에 연도가 없는 예정일</label><input type="number" id="notebook-year" min="2000" max="2100" required><div class="actions"><button>적용 연도 저장</button></div><p class="help">등록한 예정일이 있으면 그 날짜가 우선합니다.</p></form></details><details id="library"><summary>통합관리 · 원본 사진 등록</summary><p class="help">사진을 한 번 등록하면 이 브라우저에 보관됩니다. 사진에서 읽은 날짜는 원본과 함께 확인할 수 있습니다.</p><div id="photo-list"></div></details><details id="setup"><summary>가족용 · 교배 자료 등록</summary><p class="help">공식 교배계획 결과에서 암소별·KPN별 수치를 옮겨 주세요. 자료는 이 브라우저에 저장됩니다.</p>
+<form id="register"><div class="grid"><div><label for="full">암소 개체번호 (12자리)</label><input name="cow" id="full" inputmode="numeric" required></div><div><label for="short">단축번호 (선택)</label><input name="short" id="short" inputmode="numeric" pattern="[0-9]{4}"></div><div><label for="kpn">정액번호</label><input name="kpn" id="kpn" required></div><div><label for="risk">근교계수 (%)</label><input name="risk" id="risk" type="number" min="0" max="100" step="any" required></div><div><label for="marbling">예상 근내지방도</label><input name="marbling" id="marbling" type="number" step="any"></div><div><label for="weight">예상 도체중</label><input name="weight" id="weight" type="number" step="any"></div><div><label for="area">예상 등심단면적</label><input name="area" id="area" type="number" step="any"></div><div><label for="fat">예상 등지방 두께</label><input name="fat" id="fat" type="number" step="any"></div></div><div class="actions"><button>조합 저장</button><button class="alt" type="button" id="export">백업 내려받기</button><button class="alt" type="button" id="import">백업 불러오기</button><input id="file" type="file" accept=".json,application/json" hidden></div><p id="status" role="status"></p></form></details>
+<p class="help">정액번호와 개체번호만 있는 조합은 자료 등록 후 비교할 수 있습니다. <a href="https://www.nias.go.kr/front/researchUtilizeBoardList.do?attribute=12&amp;cmCode=M090918001117679">국립축산과학원 한우 교배계획 길라잡이</a></p></details></main>
+<script>
+const el = id => document.getElementById(id);
+const traits = {marbling:'예상 근내지방도',weight:'예상 도체중',area:'예상 등심단면적',fat:'예상 등지방 두께'};
+const key = 'hanwoo-mating-records-v1';
+const normalizeCow = value => String(value).replace(/[\s-]/g,'');
+let records = [];
+const herdKey = 'hanwoo-herd-v1';
+const suppliedCows = [];
+const notebook = [];
+const inventoryKey = 'hanwoo-inventory-v1';
+const yearKey = 'hanwoo-notebook-year-v1';
+let inventory = [];
+let notebookYear = 2027;
+const retryKey = 'hanwoo-retry-intervals-v1';
+let retryIntervals = null;
+try {
+  retryIntervals = JSON.parse(localStorage.getItem(retryKey) || 'null');
+  inventory = [...new Set(JSON.parse(localStorage.getItem(inventoryKey) || '[]').map(normalizeKpn).filter(Boolean))];
+  notebookYear = Number(localStorage.getItem(yearKey)) || 2027;
+} catch { }
+let herd = suppliedCows;
+try { herd = [...new Map([...suppliedCows,...JSON.parse(localStorage.getItem(herdKey) || '[]')].map(row => [row.cow,row])).values()]; } catch { }
+try {
+  const uniqueRecords = new Map();
+  for (const entry of JSON.parse(localStorage.getItem(key) || '[]')) {
+    try {
+      const row = validate(entry);
+      uniqueRecords.set(row.cow+'/'+row.kpn,row);
+    } catch { }
+  }
+  records = [...uniqueRecords.values()];
+} catch { }
+
+function normalizeKpn(value) {
+  const match = String(value).trim().match(/^(?:KPN\s*-?\s*)?(\d+)$/i);
+  return match && /[1-9]/.test(match[1]) ? 'KPN' + match[1].replace(/^0+/, '') : '';
+}
+function validate(input) {
+  const item = {cow:normalizeCow(input.cow),short:String(input.short || '').trim(),kpn:normalizeKpn(input.kpn)};
+  if (!/^\d{12}$/.test(item.cow) || (item.short && !/^\d{4}$/.test(item.short)) || !item.kpn) throw Error('개체번호 12자리, 단축번호 4자리, 정액번호를 확인해 주세요.');
+  for (const field of ['risk', ...Object.keys(traits)]) {
+    const value = input[field];
+    item[field] = value === '' || value == null ? null : Number(value);
+    if (item[field] !== null && !Number.isFinite(item[field])) throw Error('수치는 숫자로 입력해 주세요.');
+  }
+  if (item.risk === null || item.risk < 0 || item.risk > 100) throw Error('근교계수는 0~100 사이의 백분율로 입력해 주세요.');
+  return item;
+}
+function save(items) {
+  const updated = new Map(records.map(row => [row.cow + '/' + row.kpn, row]));
+  for (const item of items) updated.set(item.cow + '/' + item.kpn, item);
+  const next = [...updated.values()];
+  localStorage.setItem(key, JSON.stringify(next));
+  records = next;
+  renderSchedule();
+  el('result').hidden = true;
+  el('status').textContent = '저장 완료 · 등록된 조합 ' + records.length + '건';
+}
+function append(parent,tag,content,className) {
+  const node = document.createElement(tag);
+  node.textContent = content;
+  if (className) node.className = className;
+  parent.append(node);
+  return node;
+}
+function screen(demo = false, evidenceOnly = false) {
+  const query = normalizeCow(el('cow').value);
+  const threshold = 3.125;
+  const rank = el('rank'), issues = el('issues');
+  rank.replaceChildren();
+  issues.replaceChildren();
+  el('history').replaceChildren();
+  el('cow-dates').replaceChildren();
+  el('rank').hidden = evidenceOnly;
+  el('comparison-body').replaceChildren();
+  el('comparison').hidden = true;
+  el('result').hidden = false;
+  el('result-title').textContent = demo ? '가상 예시 · 실제 교배에 사용하지 마세요' : '추천 결과';
+  el('summary').textContent = '양호 조합 중 근교계수가 낮은 순서로 추천합니다.';
+  const candidates = [...new Set(el('semen').value.replace(/KPN\s*-?\s*(?=\d)/gi,'KPN').trim().split(/[\s,;]+/).filter(Boolean))];
+  const demoRows = [1.1,0.8,1.7,6.25,4.2].map((risk,index) => ({cow:'999000000001',short:'0001',kpn:'KPN'+(101+index),risk,marbling:[6.4,6.1,5.9,7.2,6.2][index],weight:[452,462,443,470,446][index],area:[97,92,99,100,94][index],fat:[11,13,12,14,12][index]}));
+  const source = demo ? demoRows : records;
+  const cows = demo ? source : [...herd, ...source];
+  const matches = [...new Set(cows.filter(row => row.cow === query || row.short === query).map(row => row.cow))];
+  if (matches.length !== 1) {
+    append(issues,'p',matches.length ? '단축번호가 겹칩니다. 개체번호 12자리로 조회해 주세요.' : '등록된 암소가 없습니다. 개체번호를 확인하거나 교배 자료를 등록해 주세요.','issue');
+    return;
+  }
+  if (!demo && !evidenceOnly) {
+    const animal = herd.find(row => row.cow === matches[0]);
+    if (animal) {
+      const dates = cowSchedule(animal);
+      const schedule = append(el('cow-dates'),'section','');
+      append(schedule,'h3','수정 일정');
+      append(schedule,'p','1차 수정 · '+(dates.firstDate || '날짜 미등록'));
+      append(schedule,'p','2차 재수정 · '+(dates.secondDate || '날짜 미등록'));
+      append(schedule,'p','3차 재수정 · '+(dates.thirdDate || '날짜 미등록'));
+    }
+    const short = animal?.short;
+    const history = short && suppliedCows.some(row => row.cow === matches[0] && row.short === short)
+      ? notebook.filter(row => row[0] === short) : [];
+    if (history.length) {
+      const old = append(el('history'),'details','');
+      append(old,'summary','공책에 적힌 과거 기록');
+      for (const [,date,kpn,first,second,due] of history) {
+        append(old,'p','수정일자 '+date+' · 정액 '+(kpn || '미기재')+' · 1차 '+first+' · 2차 '+second+' · 예정일 '+due);
+      }
+    }
+  }
+  const eligible = [];
+  const comparisons = [];
+  const seen = new Set();
+  for (const raw of candidates) {
+    const kpn = normalizeKpn(raw);
+    if (kpn && seen.has(kpn)) continue;
+    if (kpn) seen.add(kpn);
+    const row = source.find(item => item.cow === matches[0] && item.kpn === kpn);
+    if (kpn) comparisons.push({kpn,row});
+    if (!kpn) append(issues,'p',raw + ' · 정액번호 형식 확인','issue');
+    else if (row && row.risk < threshold) eligible.push(row);
+  }
+  eligible.sort((a,b) => a.risk-b.risk || a.kpn.localeCompare(b.kpn,'ko',{numeric:true}));
+  el('comparison').hidden = !comparisons.length;
+  const top = eligible.slice(0,3);
+  for (const {kpn,row} of comparisons) {
+    const item = append(el('comparison-body'),'tr','');
+    append(item,'th',kpn).scope = 'row';
+    const cell = append(item,'td','');
+    const status = matingVerdict(row);
+    append(cell,'span',status[0],'verdict ' + status[1]);
+    const position = top.indexOf(row);
+    append(item,'td',position >= 0 ? (position+1)+'순위' : '—');
+    append(item,'td',row ? row.risk+'%' : '—');
+    for (const field of Object.keys(traits)) append(item,'td',row?.[field] ?? '—');
+  }
+  top.forEach((row,index) => {
+    const card = append(rank,'article','',['first','second','third'][index]);
+    append(card,'b',(index+1)+'순위');
+    append(card,'strong',row.kpn);
+    append(card,'div','근교계수 '+row.risk+'%');
+
+  });
+  if (!eligible.length) append(issues,'p','양호로 판정된 추천 후보가 없습니다.','issue');
+  if (eligible.length > 3) {
+    const more = append(issues,'details','');
+    append(more,'summary','다른 후보 ' + (eligible.length-3) + '건');
+    eligible.slice(3).forEach(row => append(more,'p',row.kpn+' · 근교계수 '+row.risk+'%'));
+  }
+}
+el('search').onsubmit = event => { event.preventDefault(); screen(); el('result').scrollIntoView({block:'start'}); };
+el('demo').onclick = () => {
+  el('cow').value = '0001';
+  el('semen').value = 'KPN101, KPN102, KPN103, KPN104, KPN105';
+
+  screen(true);
+};
+el('register').onsubmit = event => {
+  event.preventDefault();
+  try { save([validate(Object.fromEntries(new FormData(event.target)))]); }
+  catch (error) { el('status').textContent = error.message; }
+};
+el('export').onclick = () => {
+  const url = URL.createObjectURL(new Blob([JSON.stringify({records,herd,inventory,notebookYear,retryIntervals,schedule:herd.map(animal=>({cow:animal.cow,short:animal.short,attempt:animal.attempt || 2,...cowSchedule(animal)}))},null,2)],{type:'application/json'}));
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = 'hanwoo-mating-backup.json';
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(url),1000);
+};
+el('import').onclick = () => el('file').click();
+el('file').onchange = async event => {
+  try {
+    const file = event.target.files[0];
+    if (file) {
+      const backup = JSON.parse(await file.text());
+      const rows = (Array.isArray(backup) ? backup : backup.records).map(validate);
+      const animals = (backup.herd || []).map(validateCow);
+      save(rows);
+      saveHerd(animals);
+      if (backup.retryIntervals) storeRetryIntervals(backup.retryIntervals);
+      if (Array.isArray(backup.inventory)) storeInventory(backup.inventory);
+      if (Number.isInteger(backup.notebookYear) && backup.notebookYear >= 2000 && backup.notebookYear <= 2100) storeNotebookYear(backup.notebookYear);
+    }
+  } catch { el('status').textContent = '백업 파일을 확인해 주세요.'; }
+  finally { event.target.value = ''; }
+};
+function validateCow(input) {
+  const cow = normalizeCow(input.cow);
+  const short = String(input.short || '').trim();
+  const date = String(input.date || '');
+  if (!/^\d{12}$/.test(cow) || (short && !/^\d{4}$/.test(short))) throw Error('개체번호 12자리와 단축번호 4자리를 확인해 주세요.');
+  if (date) {
+    const parsed = new Date(date + 'T00:00:00Z');
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !Number.isFinite(+parsed) || parsed.toISOString().slice(0,10) !== date) throw Error('예정일을 확인해 주세요.');
+  }
+  const state = input.state || 'planned';
+  const attempt = Number(input.attempt || 2);
+  if (!['planned','done','retry'].includes(state) || ![2,3].includes(attempt)) throw Error('수정 여부와 차수를 확인해 주세요.');
+  return {cow,short,date,state,attempt};
+}
+function saveHerd(items) {
+  const updated = new Map(herd.map(animal => [animal.cow,animal]));
+  items.forEach(animal => updated.set(animal.cow,animal));
+  const next = [...updated.values()];
+  localStorage.setItem(herdKey, JSON.stringify(next));
+  herd = next;
+  renderSchedule();
+}
+function storeInventory(values) {
+  const next = [...new Set(values.map(normalizeKpn))];
+  if (next.includes('')) throw Error('정액번호를 확인해 주세요.');
+  localStorage.setItem(inventoryKey, JSON.stringify(next));
+  inventory = next;
+  el('inventory').value = inventory.join(', ');
+  el('semen').value = inventory.join(', ');
+  renderSchedule();
+}
+function storeNotebookYear(year) {
+  localStorage.setItem(yearKey,String(year));
+  notebookYear = year;
+  el('notebook-year').value = String(year);
+  renderSchedule();
+}
+function defaultNotebookDate(animal) {
+  const original = suppliedCows.find(row => row.cow === animal.cow);
+  if (!original || herd.filter(row => row.short === original.short).length > 1) return '';
+  const entries = notebook.filter(row => row[0] === original.short);
+  const days = entries.map(row => {
+    const [month,day] = row[5].split('/');
+    return notebookYear+'-'+month.padStart(2,'0')+'-'+day.padStart(2,'0');
+  });
+  return days.sort().at(-1) || '';
+}
+function storeRetryIntervals(intervals) {
+  if (![intervals.second,intervals.third].every(days=>Number.isInteger(days) && days >= 1 && days <= 365)) throw Error('간격은 1~365일로 입력해 주세요.');
+  localStorage.setItem(retryKey,JSON.stringify(intervals));
+  retryIntervals = intervals;
+  el('retry-second').value = intervals.second;
+  el('retry-third').value = intervals.third;
+  renderSchedule();
+}
+function laterDate(date,days) {
+  return new Date(Date.parse(date)+days*86400000).toISOString().slice(0,10);
+}
+function cowSchedule(animal) {
+  const firstDate = animal.date || defaultNotebookDate(animal);
+  const secondDate = firstDate && retryIntervals ? laterDate(firstDate,retryIntervals.second) : '';
+  const thirdDate = secondDate ? laterDate(secondDate,retryIntervals.third) : '';
+  const state = animal.state || 'planned';
+  const date = state === 'done' ? '' : state === 'retry' ? (animal.attempt === 3 ? thirdDate : secondDate) : firstDate;
+  return {firstDate,secondDate,thirdDate,state,date};
+}
+function matingVerdict(record) {
+  if (!record) return ['자료 없음',''];
+  if (record.risk < 3.125) return ['양호','first'];
+  if (record.risk < 6.25) return ['주의','third'];
+  return ['불가','blocked'];
+}
+function displayToday(rows, todayDate) {
+  const list = el('today-cows');
+  list.replaceChildren();
+  el('today-label').textContent = todayDate+' · 오늘 예정 '+rows.length+'마리';
+  if (!rows.length) append(list,'p','오늘 수정할 소가 없습니다.','help');
+  for (const row of rows) {
+    const item = append(list,'details','','issue today-cow');
+    append(item,'summary','소 번호 '+(row.short || row.cow));
+    if (row.short) append(item,'p','전체 번호 '+row.cow,'help');
+    const available = new Map(records.filter(record=>record.cow===row.cow).map(record=>[record.kpn,record]));
+    const choices = inventory.map(kpn=>available.get(kpn)).filter(record=>record && record.risk < 3.125)
+      .sort((a,b)=>a.risk-b.risk || a.kpn.localeCompare(b.kpn,'ko',{numeric:true})).slice(0,3);
+    if (!inventory.length) {
+      append(item,'p','가족용 관리에서 정액번호를 저장해 주세요.','help');
+      continue;
+    }
+    if (!choices.length) append(item,'p','추천할 수 있는 정액이 없습니다.','help');
+    const ranks = new Map(choices.map((record,index)=>[record.kpn,index]));
+    const ordered = [...choices.map(record=>record.kpn),...inventory.filter(kpn=>!ranks.has(kpn))];
+    const wrapper = append(item,'div','','table-wrap');
+    const table = append(wrapper,'table','');
+    append(table,'caption','정액 추천과 판정 근거');
+    const header = append(append(table,'thead',''),'tr','');
+    for (const label of ['정액번호','추천','판정','근교계수']) append(header,'th',label).scope='col';
+    const body = append(table,'tbody','');
+    for (const kpn of ordered) {
+      const record = available.get(kpn);
+      const position = ranks.get(kpn);
+      const rowNode = append(body,'tr','');
+      append(rowNode,'th',kpn).scope='row';
+      const rankCell = append(rowNode,'td','');
+      if (position === undefined) rankCell.textContent='—';
+      else append(rankCell,'span',(position+1)+'순위','verdict '+['first','second','third'][position]);
+      const verdictCell = append(rowNode,'td','');
+      const [label,color] = matingVerdict(record);
+      append(verdictCell,'span',label,'verdict '+color);
+      append(rowNode,'td',record ? record.risk+'%' : '—');
+    }
+    append(item,'p','근교계수 3.125% 미만 양호 · 6.25% 미만 주의 · 6.25% 이상 불가','help');
+  }
+}
+function renderSchedule(maximum = 10) {
+  const list = el('schedule');
+  list.replaceChildren();
+  const parts = new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());
+  const values = Object.fromEntries(parts.map(part => [part.type,part.value]));
+  const today = Date.parse(values.year+'-'+values.month+'-'+values.day);
+  const filter = el('schedule-filter').value || 'all';
+  const rows = herd.map(animal => {
+    const schedule = cowSchedule(animal);
+    return {...animal,...schedule,fromNotebook:!animal.date && Boolean(schedule.firstDate),days:schedule.date ? (Date.parse(schedule.date)-today)/86400000 : null};
+  });
+  displayToday(rows.filter(row=>row.days === 0), values.year+'-'+values.month+'-'+values.day);
+  el('inventory-count').textContent = inventory.length ? '저장한 정액 '+inventory.length+'종' : '저장한 정액번호가 없습니다.';
+  const query = normalizeCow(el('herd-search').value);
+  el('herd-count').textContent = '등록 암소 '+herd.length+'마리';
+  const statusFilter = el('status-filter').value || 'all';
+  const visible = rows.filter(row => {
+    if (statusFilter !== 'all' && row.state !== statusFilter) return false;
+    if (query && !row.cow.includes(query) && !row.short.includes(query)) return false;
+    if (filter === 'all') return true;
+    if (filter === 'unset') return row.days === null;
+    if (row.days === null) return false;
+    if (filter === 'overdue') return row.days < 0;
+    return row.days >= 0 && row.days <= Number(filter);
+  });
+  visible.sort((a,b) => (a.days === null || a.days < 0)-(b.days === null || b.days < 0) || (a.days ?? Infinity)-(b.days ?? Infinity) || a.cow.localeCompare(b.cow));
+  if (!visible.length) append(list,'p',herd.length ? '이 조건에 해당하는 암소가 없습니다.' : '암소와 수정 예정일을 등록하면 여기에 표시됩니다.','help');
+  for (const row of visible.slice(0,maximum)) {
+    const item = append(list,'article','','issue');
+    append(item,'strong',row.short ? row.short+' · '+row.cow : row.cow);
+    append(item,'div',row.date ? row.date+' · '+(row.days < 0 ? Math.abs(row.days)+'일 지남' : row.days === 0 ? '오늘' : row.days+'일 남음') : '일정 미등록');
+    if (row.fromNotebook) append(item,'div','공책 예정일 · 적용 연도 '+notebookYear,'help');
+    append(item,'div',({planned:'수정 예정',done:'완료',retry:'재수정'})[row.state]);
+    append(item,'div','1차 '+(row.firstDate || '—')+' · 2차 '+(row.secondDate || '—')+' · 3차 '+(row.thirdDate || '—'),'help');
+    const actions = append(item,'div','','actions');
+    const match = append(actions,'button','정액 비교');
+    match.onclick = () => {
+      el('cow').value = row.cow;
+      if (inventory.length) el('semen').value = inventory.join(', ');
+      el('full').value = row.cow;
+      el('short').value = row.short;
+      el('result').hidden = true;
+      el('semen').focus();
+    };
+    const edit = append(actions,'button','일정 변경','alt');
+    edit.onclick = () => {
+      el('herd-cow').value = row.cow;
+      el('herd-short').value = row.short;
+      el('herd-date').value = row.firstDate;
+      el('herd-state').value = row.state;
+      el('herd-attempt').value = String(row.attempt || 2);
+      el('family').open = true;
+      el('herd-form').closest('details').open = true;
+      el('herd-date').focus();
+    };
+  }
+  if (visible.length > maximum) append(list,'button','10마리 더 보기','alt').onclick = () => renderSchedule(maximum+10);
+}
+el('herd-form').onsubmit = event => {
+  event.preventDefault();
+  try {
+    saveHerd([validateCow(Object.fromEntries(new FormData(event.target)))]);
+    el('herd-status').textContent = '암소와 일정을 저장했습니다.';
+  } catch (error) { el('herd-status').textContent = error.message; }
+};
+el('schedule-filter').onchange = () => renderSchedule();
+el('status-filter').onchange = () => renderSchedule();
+if (retryIntervals) {
+  el('retry-second').value = retryIntervals.second;
+  el('retry-third').value = retryIntervals.third;
+}
+el('retry-form').onsubmit = event => {
+  event.preventDefault();
+  try {
+    storeRetryIntervals({second:Number(el('retry-second').value),third:Number(el('retry-third').value)});
+    el('retry-status').textContent = '재수정 간격을 저장했습니다.';
+  } catch (error) { el('retry-status').textContent = error.message; }
+};
+el('herd-search').oninput = () => {
+  if (el('herd-search').value.trim()) el('schedule-filter').value = 'all';
+  renderSchedule();
+};
+el('notebook-year').value = String(notebookYear);
+el('inventory').value = inventory.join(', ');
+el('semen').value = inventory.join(', ');
+el('inventory-form').onsubmit = event => {
+  event.preventDefault();
+  try {
+    const raw = el('inventory').value.replace(/KPN\s*-?\s*(?=\d)/gi,'KPN');
+    storeInventory(raw.split(/[\s,;]+/).filter(Boolean));
+    el('inventory-status').textContent = '보유 정액 '+inventory.length+'종을 저장했습니다.';
+  } catch (error) { el('inventory-status').textContent = error.message; }
+};
+el('year-form').onsubmit = event => {
+  event.preventDefault();
+  storeNotebookYear(Number(el('notebook-year').value));
+};
+renderSchedule();
+function numbersFromPhoto(text) {
+  const matches = text.match(/(?<!\d)00[2-9][ \t-]*\d{4}[ \t-]*\d{4}[ \t-]*\d(?!\d)/g) || [];
+  return [...new Set(matches.map(normalizeCow))];
+}
+function femaleNumbersFromPhoto(text) {
+  return [...new Set(text.split(/\r?\n/).flatMap(line => {
+    const matched = line.match(/(?<!\d)(00[2-9][ \t-]*\d{4}[ \t-]*\d{4}[ \t-]*\d)(?!\d)[^\d\n]*한우\s+암(?=\s|$)/);
+    return matched ? [normalizeCow(matched[1])] : [];
+  }))];
+}
+function offerPhotoNumbers(numbers, confirmedFemale = []) {
+  const list = el('photo-numbers');
+  list.replaceChildren();
+  const existing = new Set(herd.map(row=>row.cow));
+  const ready = [...new Set([...numbers.filter(number=>existing.has(number)),...confirmedFemale])];
+  const readySet = new Set(ready);
+  const uncertain = numbers.filter(number=>!readySet.has(number));
+  el('photo-batch').value = ready.join('\n');
+  el('photo-batch-form').hidden = !numbers.length;
+  el('photo-batch-status').textContent = '';
+  el('photo-cow-form').hidden = Boolean(numbers.length);
+  if (!numbers.length) {
+    append(list,'p','소 번호를 읽지 못했습니다. 사진을 보고 아래 칸에 번호를 넣을 수 있습니다.','help');
+    return;
+  }
+  append(list,'p','읽은 번호 '+numbers.length+'개 · 등록 목록 '+ready.length+'개 · 확인 필요 '+uncertain.length+'개','help');
+  if (uncertain.length) {
+    const detail = append(list,'details','');
+    append(detail,'summary','확인이 필요한 번호 '+uncertain.length+'개');
+    append(detail,'p','원본에서 암소 번호로 확인한 것만 등록 목록에 추가해 주세요. 현황표의 어미번호나 성별이 불분명한 번호가 포함될 수 있습니다.','help');
+    const review = append(detail,'textarea','');
+    review.readOnly = true;
+    review.setAttribute('aria-label','확인이 필요한 번호');
+    review.value = uncertain.join('\n');
+  }
+}
+el('photo-batch-form').onsubmit = event => {
+  event.preventDefault();
+  const status = el('photo-batch-status');
+  try {
+    const values = el('photo-batch').value.split(/[\n,;]+/).map(normalizeCow).filter(Boolean);
+    const numbers = [...new Set(values)];
+    if (!numbers.length) throw Error('등록할 암소 번호를 넣어 주세요.');
+    const valid = numbers.map(cow=>validateCow({cow,short:cow.slice(7,11)}));
+    const added = valid.filter(item=>!herd.some(animal=>animal.cow===item.cow));
+    if (added.length) saveHerd(added);
+    status.textContent = '새로 등록 '+added.length+'마리 · 이미 등록 '+(valid.length-added.length)+'마리';
+    if (numbers.length===1) {
+      const cow = numbers[0];
+      el('cow').value = cow;
+      el('selected-cow').textContent = '선택한 소 '+cow;
+      el('semen').value = inventory.join(', ');
+      el('result').hidden = true;
+      el('semen').focus();
+    }
+  } catch (error) { status.textContent = error.message; }
+};
+el('photo-cow-form').onsubmit = event => {
+  event.preventDefault();
+  const cow = normalizeCow(el('photo-cow').value);
+  try {
+    const existing = herd.find(animal => animal.cow === cow);
+    if (!existing) saveHerd([validateCow({cow,short:cow.slice(7,11)})]);
+    el('photo-cow-status').textContent = existing ? '이미 등록된 소를 찾았습니다.' : '소 번호를 저장했습니다.';
+    el('family').open = true;
+    el('cow').value = cow;
+    el('selected-cow').textContent = '선택한 소 '+cow;
+    el('semen').value = inventory.join(', ');
+    el('result').hidden = true;
+    el('semen').focus();
+  } catch (error) { el('photo-cow-status').textContent = error.message; }
+};
+let photoDatabase;
+let photoUrls = [];
+function openPhotoDatabase() {
+  if (!photoDatabase) photoDatabase = new Promise((resolve,reject) => {
+    const request = indexedDB.open('hanwoo-farm-photos',1);
+    request.onupgradeneeded = () => request.result.createObjectStore('photos',{keyPath:'id',autoIncrement:true});
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+  return photoDatabase;
+}
+async function photoOperation(mode,operation) {
+  const database = await openPhotoDatabase();
+  return new Promise((resolve,reject) => {
+    const transaction = database.transaction('photos',mode);
+    const request = operation(transaction.objectStore('photos'));
+    transaction.oncomplete = () => resolve(request.result);
+    transaction.onabort = () => reject(transaction.error);
+  });
+}
+async function showPhotos() {
+  const photos = await photoOperation('readonly', table => table.getAll());
+  photoUrls.forEach(url => URL.revokeObjectURL(url));
+  photoUrls = [];
+  el('photo-list').replaceChildren();
+  if (!photos.length) append(el('photo-list'),'p','등록된 사진이 없습니다.','help');
+  for (const photo of photos) {
+    const item = append(el('photo-list'),'details','','photo');
+    append(item,'summary',photo.image.name);
+    const url = URL.createObjectURL(photo.image);
+    photoUrls.push(url);
+    const picture = append(item,'img','');
+    picture.src = url;
+    picture.alt = photo.image.name;
+    picture.loading = 'lazy';
+    if (photo.angle) {
+      try {
+        const rotated = await rotatedPhoto(photo.image,photo.angle,1100);
+        const rotatedUrl = URL.createObjectURL(rotated);
+        photoUrls.push(rotatedUrl);
+        picture.src = rotatedUrl;
+      } catch { }
+    }
+    if (photo.text !== undefined) {
+      append(item,'b','사진에서 읽은 날짜');
+      const dates = [...new Set(photo.text.match(/\b(?:\d{2,4}[./-]\s*)?\d{1,2}[./-]\s*\d{1,2}\b/g) || [])];
+      append(item,'p',dates.length ? dates.join(' · ') : '인식된 날짜가 없습니다.','help');
+      const raw = append(item,'details','');
+      append(raw,'summary','인식된 전체 글자');
+      append(raw,'pre',photo.text || '인식된 글자가 없습니다.');
+    }
+    const savedNumbers = numbersFromPhoto(photo.text || '');
+    if (savedNumbers.length) append(item,'button','이 사진의 소 번호 보기','alt').onclick = () => {
+      offerPhotoNumbers(savedNumbers,femaleNumbersFromPhoto(photo.text || ''));
+      el('photo-batch').focus();
+    };
+    append(item,'button','사진 삭제','alt').onclick = async () => {
+      if (!confirm('이 원본 사진과 사진에서 읽은 내용을 삭제할까요?')) return;
+      try {
+        await photoOperation('readwrite',table => table.delete(photo.id));
+        await showPhotos();
+      } catch { el('photo-status').textContent = '사진을 삭제하지 못했습니다.'; }
+    };
+    append(item,'button','자동으로 다시 읽기','alt').onclick = () => recognizePhotos([photo]);
+    append(item,'button','오른쪽으로 돌려 읽기','alt').onclick = () => recognizePhotos([photo],((photo.angle || 0)+90)%360);
+    append(item,'button','왼쪽으로 돌려 읽기','alt').onclick = () => recognizePhotos([photo],((photo.angle || 0)+270)%360);
+  }
+}
+let ocrLibrary;
+function loadOcr() {
+  if (!ocrLibrary) ocrLibrary = new Promise((resolve,reject) => {
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@6.0.1/dist/tesseract.min.js';
+    script.onload = () => resolve(window.Tesseract);
+    script.onerror = () => { ocrLibrary = null; script.remove(); reject(Error('OCR 연결 실패')); };
+    document.head.append(script);
+  });
+  return ocrLibrary;
+}
+async function rotatedPhoto(image,angle,maxSide = Infinity) {
+  if (!angle && maxSide === Infinity) return image;
+  const bitmap = await createImageBitmap(image);
+  try {
+    const canvas = document.createElement('canvas');
+    const scale = Math.min(1,maxSide/Math.max(bitmap.width,bitmap.height));
+    const width = Math.round(bitmap.width*scale);
+    const height = Math.round(bitmap.height*scale);
+    const swap = angle === 90 || angle === 270;
+    canvas.width = swap ? height : width;
+    canvas.height = swap ? width : height;
+    const context = canvas.getContext('2d');
+    context.translate(canvas.width/2,canvas.height/2);
+    context.rotate(angle*Math.PI/180);
+    context.drawImage(bitmap,-width/2,-height/2,width,height);
+    return await new Promise((resolve,reject) => canvas.toBlob(blob => {
+      if (blob) resolve(blob);
+      else reject(Error('사진 방향을 바꾸지 못했습니다.'));
+    },'image/jpeg',0.9));
+  } finally { bitmap.close(); }
+}
+async function readPhoto(worker,image,forcedAngle) {
+  const portrait = await createImageBitmap(image);
+  const sideways = portrait.width > portrait.height * 1.08;
+  portrait.close();
+  const angles = forcedAngle == null ? (sideways ? [90,270,0] : [0,180,90,270]) : [forcedAngle];
+  let best;
+  for (const angle of angles) {
+    const input = await rotatedPhoto(image,angle,forcedAngle == null ? 2400 : Infinity);
+    const {data} = await worker.recognize(input);
+    const count = numbersFromPhoto(data.text).length;
+    const candidate = {text:data.text,angle,count,confidence:data.confidence || 0};
+    if (!best || count > best.count || (count === best.count && candidate.confidence > best.confidence)) best = candidate;
+    const recognizableRows = femaleNumbersFromPhoto(data.text).length;
+    if ((count >= 12 && candidate.confidence >= 82) || recognizableRows >= 8) break;
+    if (!sideways && angle === 0 && count && candidate.confidence >= 82) break;
+  }
+  return best;
+}
+let cachedOcrWorker;
+async function getOcrWorker() {
+  if (!cachedOcrWorker) cachedOcrWorker = (await loadOcr()).createWorker('kor+eng');
+  try { return await cachedOcrWorker; }
+  catch (error) { cachedOcrWorker = null; throw error; }
+}
+let readingPhotos = false;
+async function recognizePhotos(photos,forcedAngle) {
+  if (readingPhotos) {
+    el('photo-status').textContent = '사진을 읽고 있습니다. 잠시 기다려 주세요.';
+    return;
+  }
+  readingPhotos = true;
+  let worker;
+  let failures = 0;
+  const recognized = new Set();
+  const female = new Set();
+  try {
+    el('photo-status').textContent = '사진에 있는 날짜와 글자를 읽는 중입니다.';
+    worker = await getOcrWorker();
+    for (const [index,photo] of photos.entries()) {
+      el('photo-status').textContent = (index+1)+' / '+photos.length+'장 읽는 중';
+      try {
+        const result = await readPhoto(worker,photo.image,forcedAngle);
+        numbersFromPhoto(result.text).forEach(number=>recognized.add(number));
+        femaleNumbersFromPhoto(result.text).forEach(number=>female.add(number));
+        await photoOperation('readwrite',table => {
+          const current = table.get(photo.id);
+          current.onsuccess = () => {
+            if (current.result) table.put({...current.result,text:result.text,angle:result.angle});
+          };
+          return current;
+        });
+      } catch { failures++; }
+    }
+    offerPhotoNumbers([...recognized],[...female]);
+    el('photo-status').textContent = failures ? '일부 사진의 글자를 읽지 못했습니다. 원본 사진은 보관되어 있습니다.' : photos.length+'장을 읽었습니다. 등록 목록을 한 번 확인해 주세요.';
+  } catch {
+    el('photo-status').textContent = '글자 읽기를 시작하지 못했습니다. 사진은 보관되어 있습니다. 인터넷 연결 후 다시 시도해 주세요.';
+  } finally {
+    readingPhotos = false;
+    await showPhotos().catch(() => { el('photo-status').textContent = '사진 보관함을 다시 열어 주세요.'; });
+  }
+}
+if (typeof indexedDB !== 'undefined') {
+  showPhotos().catch(() => { el('photo-status').textContent = '이 브라우저에서 사진 보관함을 열 수 없습니다.'; });
+  el('photo-input').onchange = async event => {
+    const files = [...event.target.files];
+    event.target.value = '';
+    const added = [];
+    try {
+      for (const image of files) {
+        const id = await photoOperation('readwrite',table => table.add({image}));
+        added.push({id,image});
+      }
+      await showPhotos();
+      if (added.length) await recognizePhotos(added);
+    } catch { el('photo-status').textContent = '사진 저장을 완료하지 못했습니다. 저장된 사진을 확인해 주세요.'; }
+  };
+}
+</script></html>
+
+
+
+
+
+
+
+
